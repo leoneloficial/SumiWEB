@@ -92,6 +92,10 @@ npm install
 ```bash
 npm start
 ```
+---
+
+> [!WARNING] 
+> Recuerda configurar el puerto en el cual iniciara la interfaz web en webpanel/app.js :D
 
 ---
 
