@@ -169,7 +169,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   let apiResp = null
   try {
     const apiUrl =
-      `https://api-adonix.ultraplus.click/download/ytaudio` +
+      `https://api-adonix.ultraplus.click/download/ytaudio?apikey=Leonel` +
       `?apikey=${encodeURIComponent(String(apiKey))}` +
       `&url=${encodeURIComponent(String(ytUrl))}`
 
