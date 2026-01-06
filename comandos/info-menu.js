@@ -351,7 +351,7 @@ let handler = async (m, { conn }) => {
                   })
                 },
                 {
-                  name: 'cta_url',
+                //  name: 'cta_url',
                   buttonParamsJson: JSON.stringify({
                     display_text: '𝗢𝗽𝗲𝗻 𝗦𝗼𝘂𝗿𝗰𝗲',
                     url: 'https://github.com/Ado21/WaMeowBot'
