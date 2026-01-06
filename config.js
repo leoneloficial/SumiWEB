@@ -1,5 +1,5 @@
 const config = {
-  nombrebot: 'Meow WaBot',
+  nombrebot: 'leonel',
   moneda: '$ᴅᴏʟᴀʀᴇs',
   apikey: '', // Pon tu apikey aqui, consiguela en: https://api-adonix.ultraplus.click
   prefijo: '.',
