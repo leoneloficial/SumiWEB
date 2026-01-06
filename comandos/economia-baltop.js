@@ -67,7 +67,7 @@ const handler = async (m, { conn, args }) => {
     lines.push(`> • Página *${page}* de *${totalPages}*`)
 
     const text = economyDecor({
-      title: 'Los usuarios con más *ᴅᴏʟᴀʀᴇs* son:',
+      title: 'Los usuarios con más *¥enes* son:',
       lines
     })
 
