@@ -339,8 +339,8 @@ let handler = async (m, { conn }) => {
                 {
                   name: 'cta_url',
                   buttonParamsJson: JSON.stringify({
-                    display_text: '❀HASTE SUBBOT❀',
-                    url: 'https://sumi-cds.ultraplus.click'
+                    display_text: '',
+                    url: ''
                   })
                 },
                 {
