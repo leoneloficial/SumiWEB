@@ -339,8 +339,8 @@ let handler = async (m, { conn }) => {
                 {
                   name: 'cta_url',
                   buttonParamsJson: JSON.stringify({
-                    display_text: '',
-                    url: ''
+                    display_text: ❀Haste subbot❀',
+                    url: 'http://185.16.39.160:5045/login'
                   })
                 },
                 {
