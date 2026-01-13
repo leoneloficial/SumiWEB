@@ -1,226 +1,191 @@
-import yts from 'yt-search'
 
-const MAX_SECONDS = 90 * 60
-const HTTP_TIMEOUT_MS = 90 * 1000
+import fetch from "node-fetch"
+import yts from "yt-search"
 
-function parseDurationToSeconds(d) {
-  if (d == null) return null
-  if (typeof d === 'number' && Number.isFinite(d)) return Math.max(0, Math.floor(d))
-  const s = String(d).trim()
-  if (!s) return null
-  if (/^\d+$/.test(s)) return Math.max(0, parseInt(s, 10))
-  const parts = s.split(':').map((x) => x.trim()).filter(Boolean)
-  if (!parts.length || parts.some((p) => !/^\d+$/.test(p))) return null
-  let sec = 0
-  for (const p of parts) sec = sec * 60 + parseInt(p, 10)
-  return Number.isFinite(sec) ? sec : null
-}
-
-function formatErr(err, maxLen = 1500) {
-  const e = err ?? 'Error desconocido'
-  let msg = ''
-
-  if (e instanceof Error) msg = e.stack || `${e.name}: ${e.message}`
-  else if (typeof e === 'string') msg = e
-  else {
-    try {
-      msg = JSON.stringify(e, null, 2)
-    } catch {
-      msg = String(e)
-    }
-  }
-
-  msg = String(msg || 'Error desconocido').trim()
-  if (msg.length > maxLen) msg = msg.slice(0, maxLen) + '\n... (recortado)'
-  return msg
-}
-
-async function fetchJson(url, timeoutMs = HTTP_TIMEOUT_MS) {
-  const ctrl = new AbortController()
-  const t = setTimeout(() => ctrl.abort(), timeoutMs)
+const handler = async (m, { conn, text, usedPrefix, command }) => {
   try {
-    const res = await fetch(url, {
-      method: 'GET',
-      signal: ctrl.signal,
-      headers: { accept: 'application/json', 'user-agent': 'Mozilla/5.0' }
-    })
-    const text = await res.text().catch(() => '')
-    let data = null
-    try {
-      data = text ? JSON.parse(text) : null
-    } catch {
-      data = null
-    }
-    if (!res.ok) {
-      const msg = data?.message || data?.error || text || `HTTP ${res.status}`
-      throw new Error(`HTTP ${res.status}: ${String(msg).slice(0, 400)}`)
-    }
-    if (data == null) throw new Error('Respuesta JSON inválida')
-    return data
-  } finally {
-    clearTimeout(t)
-  }
-}
+    if (!text?.trim())
+      return conn.reply(m.chat, `❀ Por favor, ingresa el nombre de la música a descargar.`, m)
 
-async function fetchBuffer(url, timeoutMs = HTTP_TIMEOUT_MS) {
-  const ctrl = new AbortController()
-  const t = setTimeout(() => ctrl.abort(), timeoutMs)
-  try {
-    const res = await fetch(url, { signal: ctrl.signal, headers: { 'user-agent': 'Mozilla/5.0' } })
-    if (!res.ok) throw new Error(`No se pudo bajar el audio (HTTP ${res.status})`)
-    const ab = await res.arrayBuffer()
-    return Buffer.from(ab)
-  } finally {
-    clearTimeout(t)
-  }
-}
+    await m.react("🕒")
 
-function guessMimeFromUrl(fileUrl = '') {
-  let ext = ''
-  try {
-    ext = new URL(fileUrl).pathname.split('.').pop() || ''
-  } catch {
-    ext = String(fileUrl).split('.').pop() || ''
-  }
-  ext = '.' + String(ext).toLowerCase().replace(/[^a-z0-9]/g, '')
-  if (ext === '.m4a') return 'audio/mp4'
-  if (ext === '.opus') return 'audio/ogg; codecs=opus'
-  if (ext === '.webm') return 'audio/webm'
-  return 'audio/mpeg'
-}
-
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-  const chatId = m?.chat || m?.key?.remoteJid
-  if (!chatId) return
-
-  if (!text) {
-    return conn.sendMessage(
-      chatId,
-      { text: `「✦」Escribe el nombre o link del video.\n> ✐ Ejemplo » *${usedPrefix + command} lovely*` },
-      { quoted: m }
+    const videoMatch = text.match(
+      /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/|v\/))([a-zA-Z0-9_-]{11})/
     )
-  }
+    const query = videoMatch ? "https://youtu.be/" + videoMatch[1] : text
 
-  await conn.sendMessage(chatId, { react: { text: '🕒', key: m.key } }).catch(() => {})
+    const search = await yts(query)
+    const result = videoMatch
+      ? search.videos.find(v => v.videoId === videoMatch[1]) || search.all?.[0]
+      : search.all?.[0]
 
-  let ytUrl = text.trim()
-  let ytInfo = null
+    if (!result) throw "ꕥ No se encontraron resultados."
 
-  try {
-    if (!/youtu\.be|youtube\.com/i.test(ytUrl)) {
-      const search = await yts(ytUrl)
-      const first = search?.videos?.[0]
-      if (!first) {
-        await conn.sendMessage(chatId, { text: '「✦」No se encontraron resultados.' }, { quoted: m })
-        return
+    const { title, thumbnail, url, author, seconds } = result
+    if (seconds > 2700) throw "⚠ El contenido supera el límite de duración (45 minutos)."
+
+    const isAudio = ["play", "yta", "ytmp3", "playaudio"].includes(command)
+    const isVideo = ["play2", "ytv", "ytmp4", "mp4"].includes(command)
+
+    let media = null
+    if (isAudio) {
+      media = await getAud(url)
+      if (!media?.url) throw "⚠ No se pudo obtener el audio."
+    } else if (isVideo) {
+      media = await getVid(url)
+      if (!media?.url) throw "⚠ No se pudo obtener el video."
+    }
+
+    const duracion = formatDuration(seconds)
+    const calidad = isVideo ? "360p" : "128kbps"
+    const tamano = media?.url ? await getRemoteSize(media.url) : "No disponible"
+
+    const info =
+      `「✦」Descargando *<${title}>*\n\n` +
+      `> ✐ Canal » *${author?.name || "Desconocido"}*\n` +
+      `> ⴵ Duracion » *${duracion}*\n` +
+      `> ✰ Calidad: *${calidad}*\n` +
+      `> ❒ API » *Adonix*\n` +
+      `> 🜸 Link » ${url}`
+
+    const thumb = (await conn.getFile(thumbnail)).data
+    await conn.sendMessage(m.chat, { image: thumb, caption: info }, { quoted: m })
+
+    if (isAudio) {
+      if (command === "ytmp3") {
+        await conn.sendMessage(
+          m.chat,
+          { audio: { url: media.url }, fileName: `${title}.mp3`, mimetype: "audio/mpeg" },
+          { quoted: m }
+        )
+      } else {
+        await conn.sendMessage(
+          m.chat,
+          {
+            document: { url: media.url },
+            fileName: `${title}.mp3`,
+            mimetype: "audio/mpeg",
+            caption: ``
+          },
+          { quoted: m }
+        )
       }
-      ytInfo = first
-      ytUrl = first.url
-    } else {
-      const search = await yts({ query: ytUrl, pages: 1 })
-      if (search?.videos?.length) ytInfo = search.videos[0]
+      await m.react("✔️")
+      return
+    }
+
+    if (isVideo) {
+      if (command === "ytmp4") {
+        await conn.sendMessage(
+          m.chat,
+          { video: { url: media.url }, mimetype: "video/mp4", caption: `` },
+          { quoted: m }
+        )
+      } else {
+        await conn.sendMessage(
+          m.chat,
+          {
+            document: { url: media.url },
+            fileName: `${title}.mp4`,
+            mimetype: "video/mp4",
+            caption: ``
+          },
+          { quoted: m }
+        )
+      }
+      await m.react("✔️")
+      return
     }
   } catch (e) {
-    await conn.sendMessage(
-      chatId,
-      { text: `「✦」Error buscando en YouTube.\n\n> 🧩 Error:\n\`\`\`\n${formatErr(e)}\n\`\`\`` },
-      { quoted: m }
-    )
-    return
-  }
-
-  const durSec =
-    parseDurationToSeconds(ytInfo?.duration?.seconds) ??
-    parseDurationToSeconds(ytInfo?.seconds) ??
-    parseDurationToSeconds(ytInfo?.duration) ??
-    parseDurationToSeconds(ytInfo?.timestamp)
-
-  if (durSec && durSec > MAX_SECONDS) {
-    await conn.sendMessage(
-      chatId,
-      { text: `「✦」Audio muy largo.\n> Máx: ${Math.floor(MAX_SECONDS / 60)} min.` },
-      { quoted: m }
-    )
-    return
-  }
-
-  const title = ytInfo?.title || 'Audio'
-  const author = ytInfo?.author?.name || ytInfo?.author || 'Desconocido'
-  const duration = ytInfo?.timestamp || 'Desconocida'
-  const thumbnail = ytInfo?.thumbnail
-
-  const caption =
-    `「✦」Enviando *${title}*\n\n` +
-    `> ❀ Canal » *${author}*\n` +
-    `> ⴵ Duración » *${duration}*\n` +
-    `> 🜸 Link » ${ytUrl}`
-
-  try {
-    if (thumbnail) await conn.sendMessage(chatId, { image: { url: thumbnail }, caption }, { quoted: m })
-    else await conn.sendMessage(chatId, { text: caption }, { quoted: m })
-  } catch {}
-
-  const apiKey = globalThis?.apikey
-  if (!apiKey) {
-    await conn.sendMessage(chatId, { text: `「✦」Falta configurar globalThis.apikey para usar la API.` }, { quoted: m })
-    return
-  }
-
-  let apiResp = null
-  try {
-    const apiUrl =
-      `https://api-adonix.ultraplus.click/download/ytaudio` +
-      `?apikey=${encodeURIComponent(String(apiKey))}` +
-      `&url=${encodeURIComponent(String(ytUrl))}`
-
-    apiResp = await fetchJson(apiUrl, HTTP_TIMEOUT_MS)
-  } catch (e) {
-    await conn.sendMessage(
-      chatId,
-      { text: `「✦」Error usando la API.\n\n> 🧩 Error:\n\`\`\`\n${formatErr(e)}\n\`\`\`` },
-      { quoted: m }
-    )
-    return
-  }
-
-  if (!apiResp?.status || !apiResp?.data?.url) {
-    await conn.sendMessage(
-      chatId,
-      { text: `「✦」La API no devolvió un link válido.\n\n> Respuesta:\n\`\`\`\n${String(JSON.stringify(apiResp, null, 2)).slice(0, 1500)}\n\`\`\`` },
-      { quoted: m }
-    )
-    return
-  }
-
-  const directUrl = String(apiResp.data.url)
-  const apiTitle = apiResp?.data?.title || title
-
-  try {
-    const audioBuffer = await fetchBuffer(directUrl, HTTP_TIMEOUT_MS)
-    const mime = guessMimeFromUrl(directUrl)
-
-    await conn.sendMessage(
-      chatId,
-      {
-        audio: audioBuffer,
-        mimetype: mime,
-        fileName: `${apiTitle}.mp3`
-      },
-      { quoted: m }
-    )
-
-    await conn.sendMessage(chatId, { react: { text: '✔️', key: m.key } }).catch(() => {})
-  } catch (e) {
-    await conn.sendMessage(
-      chatId,
-      { text: `「✦」Error descargando/enviando el audio.\n\n> 🧩 Error:\n\`\`\`\n${formatErr(e)}\n\`\`\`` },
-      { quoted: m }
+    await m.react("✖️")
+    return conn.reply(
+      m.chat,
+      typeof e === "string"
+        ? e
+        : "⚠︎ Se ha producido un problema.\n> Usa *" +
+            usedPrefix +
+            "report* para informarlo.\n\n" +
+            (e?.message || e),
+      m
     )
   }
 }
 
-handler.help = ['play <texto|link>']
-handler.tags = ['multimedia']
-handler.command = ['play']
+handler.command = handler.help = ["play", "yta", "ytmp3", "play2", "ytv", "ytmp4", "mp4"]
+handler.tags = ["descargas"]
+handler.group = true
 
 export default handler
+
+async function getAud(url) {
+  const endpoint = `${global.APIs.adonix.url}/download/ytaudio?apikey=${global.APIs.adonix.key}&url=${encodeURIComponent(
+    url
+  )}`
+  const res = await fetchJson(endpoint)
+  const link = res?.data?.url
+  return link ? { url: link, api: "Adonix" } : null
+}
+
+async function getVid(url) {
+  const endpoint = `${global.APIs.adonix.url}/download/ytvideo?apikey=${global.APIs.adonix.key}&url=${encodeURIComponent(
+    url
+  )}`
+  const res = await fetchJson(endpoint)
+  const link = res?.data?.url
+  return link ? { url: link, api: "Adonix" } : null
+}
+
+async function fetchJson(url) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 15000)
+  try {
+    const r = await fetch(url, { signal: controller.signal })
+    return await r.json()
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+function formatDuration(totalSeconds) {
+  if (!Number.isFinite(totalSeconds)) return "No disponible"
+  const h = Math.floor(totalSeconds / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = Math.floor(totalSeconds % 60)
+
+  if (h > 0) return `${h} horas ${m} minutos ${s} segundos`
+  return `${m} minutos ${s} segundos`
+}
+
+async function getRemoteSize(fileUrl) {
+  try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10000)
+    const r = await fetch(fileUrl, { method: "HEAD", signal: controller.signal })
+    clearTimeout(timeout)
+    const len = r.headers.get("content-length")
+    if (!len) return "No disponible"
+    return formatBytes(Number(len))
+  } catch {
+    return "No disponible"
+  }
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "No disponible"
+  const units = ["B", "KB", "MB", "GB"]
+  let i = 0
+  let n = bytes
+  while (n >= 1024 && i < units.length - 1) {
+    n /= 1024
+    i++
+  }
+  return `${n.toFixed(2)}${units[i]}`
+}
+
+function formatViews(views) {
+  if (views === undefined) return "No disponible"
+  if (views >= 1_000_000_000) return `${(views / 1_000_000_000).toFixed(1)}B (${views.toLocaleString()})`
+  if (views >= 1_000_000) return `${(views / 1_000_000).toFixed(1)}M (${views.toLocaleString()})`
+  if (views >= 1_000) return `${(views / 1_000).toFixed(1)}k (${views.toLocaleString()})`
+  return views.toString()
+}
