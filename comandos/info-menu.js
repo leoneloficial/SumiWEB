@@ -53,10 +53,12 @@ let handler = async (m, { conn }) => {
 
   const menuText = `
 「✿」¡Hola Soy \`${visual.name || globalThis.nombrebot || 'Bot'}\`! 
-✐ *${identity}*
-❍ *Fecha y hora:* *${nowText}*
-❑ *Uptime:* *${uptimeText}*
 
+╭┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+│✐ *${identity}*
+│❍ *Fecha y hora:* *${nowText}*
+│❑ *Uptime:* *${uptimeText}*
+╰ׅ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 ❀ *Descargas & Búsquedas*
 > ✐ *.play*
 > ❀ Descarga audios de YouTube.
