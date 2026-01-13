@@ -1,23 +1,21 @@
 const config = {
-  nombrebot: 'sumi sakurasawa',
-  moneda: '¥enes',
-  apikey: 'LeonelKeyrqla131953', // Pon tu apikey aqui, consiguela en: https://api-adonix.ultraplus.click
-  prefijo: '.',
+    nombrebot: 'sumi sakurasawa',
+    moneda: 'Yenes',
+    apikey: 'AdonixKey21e31m8441', 
+    prefijo: '.',
 
-  owner: [
- '393715279301@lid',
-    '393715279301@s.whatsapp.net',
-    '393715279301@s.whatsapp.net'
-  ],
+    owner: [
+ '393715279301@lid',     '393715279301@s.whatsapp.net',        '393715279301@s.whatsapp.net'
+    ],
 
-  restrict: false
-}
+    restrict: false
+};
 
 try {
-  if (!globalThis.nombrebot) globalThis.nombrebot = config.nombrebot
-  if (!globalThis.moneda) globalThis.moneda = config.moneda
-  if (!globalThis.prefijo) globalThis.prefijo = config.prefijo
-  if (!globalThis.apikey) globalThis.apikey = config.apikey
+    if (!globalThis.nombrebot) globalThis.nombrebot = config.nombrebot;
+    if (!globalThis.moneda) globalThis.moneda = config.moneda;
+    if (!globalThis.prefijo) globalThis.prefijo = config.prefijo;
+    if (!globalThis.apikey) globalThis.apikey = config.apikey;
 } catch {}
 
-export default config
+export default config;
