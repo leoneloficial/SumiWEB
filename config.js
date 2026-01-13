@@ -1,7 +1,7 @@
 const config = {
     nombrebot: 'sumi sakurasawa',
     moneda: 'Yenes',
-    apikey: '', 
+    apikey: 'LeonelKeyrqla131953', 
     prefijo: '.',
 
     owner: [
