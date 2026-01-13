@@ -60,7 +60,7 @@ function assertApiKey() {
 
 async function fetchYtVideoFromApi(ytUrl) {
   const apikey = assertApiKey()
-  const endpoint = `https://api-adonix.ultraplus.click/download/ytvideo?apikey=${encodeURIComponent(apikey)}&url=${encodeURIComponent(ytUrl)}`
+  const endpoint = `https://api-adonix.ultraplus.click/download/ytvideo?apikey=${encodeURIComponent(apikey)}&url=${encodeURIComponent(ytUrl)}`,
 
   const { data } = await axios.get(endpoint, {
     timeout: 900000,
