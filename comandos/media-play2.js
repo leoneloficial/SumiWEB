@@ -1,7 +1,15 @@
 import yts from 'yt-search'
+import axios from 'axios'
 
 const MAX_SECONDS = 90 * 60
-const HTTP_TIMEOUT_MS = 90 * 1000
+
+function getVideoId(url = '') {
+  const m =
+    url.match(/v=([a-zA-Z0-9_-]{6,})/) ||
+    url.match(/youtu\.be\/([a-zA-Z0-9_-]{6,})/) ||
+    url.match(/shorts\/([a-zA-Z0-9_-]{6,})/)
+  return m?.[1]
+}
 
 function parseDurationToSeconds(d) {
   if (d == null) return null
@@ -9,218 +17,215 @@ function parseDurationToSeconds(d) {
   const s = String(d).trim()
   if (!s) return null
   if (/^\d+$/.test(s)) return Math.max(0, parseInt(s, 10))
-  const parts = s.split(':').map((x) => x.trim()).filter(Boolean)
+
+  const parts = s
+    .split(':')
+    .map((x) => x.trim())
+    .filter(Boolean)
   if (!parts.length || parts.some((p) => !/^\d+$/.test(p))) return null
+
   let sec = 0
   for (const p of parts) sec = sec * 60 + parseInt(p, 10)
   return Number.isFinite(sec) ? sec : null
 }
 
-function formatErr(err, maxLen = 1500) {
-  const e = err ?? 'Error desconocido'
-  let msg = ''
+function secondsToHms(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return 'Desconocida'
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = Math.floor(seconds % 60)
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  return `${m}:${String(s).padStart(2, '0')}`
+}
 
-  if (e instanceof Error) msg = e.stack || `${e.name}: ${e.message}`
-  else if (typeof e === 'string') msg = e
-  else {
-    try {
-      msg = JSON.stringify(e, null, 2)
-    } catch {
-      msg = String(e)
-    }
-  }
+function formatErr(err, maxLen = 1400) {
+  const e = err ?? 'Error desconocido'
+  let msg =
+    e instanceof Error
+      ? e.stack || `${e.name}: ${e.message}`
+      : typeof e === 'string'
+        ? e
+        : JSON.stringify(e, null, 2)
 
   msg = String(msg || 'Error desconocido').trim()
   if (msg.length > maxLen) msg = msg.slice(0, maxLen) + '\n... (recortado)'
   return msg
 }
 
-async function fetchJson(url, timeoutMs = HTTP_TIMEOUT_MS) {
-  const ctrl = new AbortController()
-  const t = setTimeout(() => ctrl.abort(), timeoutMs)
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      signal: ctrl.signal,
-      headers: { accept: 'application/json', 'user-agent': 'Mozilla/5.0' }
-    })
-    const text = await res.text().catch(() => '')
-    let data = null
-    try {
-      data = text ? JSON.parse(text) : null
-    } catch {
-      data = null
-    }
-    if (!res.ok) {
-      const msg = data?.message || data?.error || text || `HTTP ${res.status}`
-      throw new Error(`HTTP ${res.status}: ${String(msg).slice(0, 400)}`)
-    }
-    if (data == null) throw new Error('Respuesta JSON inválida')
-    return data
-  } finally {
-    clearTimeout(t)
-  }
+function assertApiKey() {
+  const key = globalThis?.apikey
+  if (!key || typeof key !== 'string') throw new Error('Falta globalThis.apikey')
+  return key.trim()
 }
 
-async function fetchBuffer(url, timeoutMs = HTTP_TIMEOUT_MS) {
-  const ctrl = new AbortController()
-  const t = setTimeout(() => ctrl.abort(), timeoutMs)
-  try {
-    const res = await fetch(url, { signal: ctrl.signal, headers: { 'user-agent': 'Mozilla/5.0' } })
-    if (!res.ok) throw new Error(`No se pudo bajar el audio (HTTP ${res.status})`)
-    const ab = await res.arrayBuffer()
-    return Buffer.from(ab)
-  } finally {
-    clearTimeout(t)
+async function fetchYtVideoFromApi(ytUrl) {
+  const apikey = assertApiKey()
+  const endpoint = `https://api-adonix.ultraplus.click/download/ytvideo?apikey=${encodeURIComponent(apikey)}&url=${encodeURIComponent(ytUrl)}`
+
+  const { data } = await axios.get(endpoint, {
+    timeout: 900000,
+    headers: { Accept: 'application/json' },
+    validateStatus: () => true
+  })
+
+  if (!data || typeof data !== 'object') throw new Error('Respuesta inválida de la API (no JSON)')
+  if (data.status !== true) {
+    const msg = data?.message || data?.error || 'La API devolvió status=false'
+    throw new Error(String(msg))
   }
+
+  const title = data?.data?.title
+  const url = data?.data?.url
+  if (!title || !url) throw new Error('Respuesta incompleta: falta data.title o data.url')
+
+  return { title: String(title), url: String(url), raw: data }
 }
 
-function guessMimeFromUrl(fileUrl = '') {
-  let ext = ''
-  try {
-    ext = new URL(fileUrl).pathname.split('.').pop() || ''
-  } catch {
-    ext = String(fileUrl).split('.').pop() || ''
-  }
-  ext = '.' + String(ext).toLowerCase().replace(/[^a-z0-9]/g, '')
-  if (ext === '.m4a') return 'audio/mp4'
-  if (ext === '.opus') return 'audio/ogg; codecs=opus'
-  if (ext === '.webm') return 'audio/webm'
-  return 'audio/mpeg'
-}
-
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-  const chatId = m?.chat || m?.key?.remoteJid
-  if (!chatId) return
+let handler = async (m, { conn, text }) => {
+  const from = m?.chat || m?.key?.remoteJid
+  if (!from) return
 
   if (!text) {
     return conn.sendMessage(
-      chatId,
-      { text: `「✦」Escribe el nombre o link del video.\n> ✐ Ejemplo » *${usedPrefix + command} lovely*` },
+      from,
+      { text: '「✦」Escribe el nombre o link del video.\n> ✐ Ejemplo » *.play2 lovely*' },
       { quoted: m }
     )
   }
 
-  await conn.sendMessage(chatId, { react: { text: '🕒', key: m.key } }).catch(() => {})
+  await conn.sendMessage(from, { react: { text: '🕒', key: m.key } }).catch(() => {})
 
   let ytUrl = text.trim()
-  let ytInfo = null
+  const isLink = /youtu\.be|youtube\.com/i.test(ytUrl)
 
-  try {
-    if (!/youtu\.be|youtube\.com/i.test(ytUrl)) {
+  if (!isLink) {
+    try {
       const search = await yts(ytUrl)
       const first = search?.videos?.[0]
       if (!first) {
-        await conn.sendMessage(chatId, { text: '「✦」No se encontraron resultados.' }, { quoted: m })
-        return
+        return conn.sendMessage(
+          from,
+          { text: '「✦」No se encontraron resultados.\n> ✐ Intenta con otro título.' },
+          { quoted: m }
+        )
       }
-      ytInfo = first
       ytUrl = first.url
-    } else {
-      const search = await yts({ query: ytUrl, pages: 1 })
-      if (search?.videos?.length) ytInfo = search.videos[0]
+    } catch (err) {
+      console.error('[play2] Error yt-search:', err)
+      return conn.sendMessage(
+        from,
+        { text: `「✦」Error buscando en YouTube.\n\n> 🧩 Error:\n\`\`\`\n${formatErr(err)}\n\`\`\`` },
+        { quoted: m }
+      )
     }
-  } catch (e) {
-    await conn.sendMessage(
-      chatId,
-      { text: `「✦」Error buscando en YouTube.\n\n> 🧩 Error:\n\`\`\`\n${formatErr(e)}\n\`\`\`` },
-      { quoted: m }
-    )
-    return
   }
 
-  const durSec =
-    parseDurationToSeconds(ytInfo?.duration?.seconds) ??
-    parseDurationToSeconds(ytInfo?.seconds) ??
-    parseDurationToSeconds(ytInfo?.duration) ??
-    parseDurationToSeconds(ytInfo?.timestamp)
-
-  if (durSec && durSec > MAX_SECONDS) {
-    await conn.sendMessage(
-      chatId,
-      { text: `「✦」Audio muy largo.\n> Máx: ${Math.floor(MAX_SECONDS / 60)} min.` },
-      { quoted: m }
-    )
-    return
+  let meta = null
+  try {
+    const search = await yts(ytUrl)
+    const first = search?.videos?.[0] || null
+    if (first) {
+      meta = {
+        title: first.title || 'Video',
+        author: first.author?.name || 'Desconocido',
+        durationSec: parseDurationToSeconds(first.seconds ?? first.timestamp),
+        durationText: first.timestamp || 'Desconocida',
+        thumb: first.thumbnail || null,
+        url: first.url || ytUrl
+      }
+    } else {
+      meta = {
+        title: 'Video',
+        author: 'Desconocido',
+        durationSec: null,
+        durationText: 'Desconocida',
+        thumb: null,
+        url: ytUrl
+      }
+    }
+  } catch (errMeta) {
+    console.error('[play2] Error meta yt-search:', errMeta)
+    meta = {
+      title: 'Video',
+      author: 'Desconocido',
+      durationSec: null,
+      durationText: 'Desconocida',
+      thumb: null,
+      url: ytUrl
+    }
   }
 
-  const title = ytInfo?.title || 'Audio'
-  const author = ytInfo?.author?.name || ytInfo?.author || 'Desconocido'
-  const duration = ytInfo?.timestamp || 'Desconocida'
-  const thumbnail = ytInfo?.thumbnail
+  const title = meta?.title || 'Video'
+  const author = meta?.author || 'Desconocido'
+  const durationText = meta?.durationText || 'Desconocida'
+  const durationSec = meta?.durationSec
+
+  const vid = getVideoId(meta?.url || ytUrl)
+  const thumb = meta?.thumb || (vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : null)
+
+  const overLimit = Number.isFinite(durationSec) ? durationSec > MAX_SECONDS : false
 
   const caption =
     `「✦」Enviando *${title}*\n\n` +
     `> ❀ Canal » *${author}*\n` +
-    `> ⴵ Duración » *${duration}*\n` +
-    `> 🜸 Link » ${ytUrl}`
+    `> ⴵ Duración » *${durationText}*\n` +
+    `> 🜸 Link » ${meta?.url || ytUrl}\n` +
+    (overLimit ? `\n> ⚠️ *Pasa de 1h 30m, se enviará como documento.*` : '')
 
   try {
-    if (thumbnail) await conn.sendMessage(chatId, { image: { url: thumbnail }, caption }, { quoted: m })
-    else await conn.sendMessage(chatId, { text: caption }, { quoted: m })
-  } catch {}
-
-  const apiKey = globalThis?.apikey
-  if (!apiKey) {
-    await conn.sendMessage(chatId, { text: `「✦」Falta configurar globalThis.apikey para usar la API.` }, { quoted: m })
-    return
+    if (thumb) {
+      await conn.sendMessage(from, { image: { url: thumb }, caption }, { quoted: m })
+    } else {
+      await conn.sendMessage(from, { text: caption }, { quoted: m })
+    }
+  } catch (errPrev) {
+    console.error('[play2] Error preview:', errPrev)
   }
-
-  let apiResp = null
-  try {
-    const apiUrl =
-      `https://api-adonix.ultraplus.click/download/ytaudio` +
-      `?apikey=${encodeURIComponent(String(apiKey))}` +
-      `&url=${encodeURIComponent(String(ytUrl))}`
-
-    apiResp = await fetchJson(apiUrl, HTTP_TIMEOUT_MS)
-  } catch (e) {
-    await conn.sendMessage(
-      chatId,
-      { text: `「✦」Error usando la API.\n\n> 🧩 Error:\n\`\`\`\n${formatErr(e)}\n\`\`\`` },
-      { quoted: m }
-    )
-    return
-  }
-
-  if (!apiResp?.status || !apiResp?.data?.url) {
-    await conn.sendMessage(
-      chatId,
-      { text: `「✦」La API no devolvió un link válido.\n\n> Respuesta:\n\`\`\`\n${String(JSON.stringify(apiResp, null, 2)).slice(0, 1500)}\n\`\`\`` },
-      { quoted: m }
-    )
-    return
-  }
-
-  const directUrl = String(apiResp.data.url)
-  const apiTitle = apiResp?.data?.title || title
 
   try {
-    const audioBuffer = await fetchBuffer(directUrl, HTTP_TIMEOUT_MS)
-    const mime = guessMimeFromUrl(directUrl)
+    const apiResp = await fetchYtVideoFromApi(meta?.url || ytUrl)
 
-    await conn.sendMessage(
-      chatId,
-      {
-        audio: audioBuffer,
-        mimetype: mime,
-        fileName: `${apiTitle}.mp3`
-      },
-      { quoted: m }
-    )
+    const fileName = `${String(apiResp.title || title)
+      .replace(/[\\/:*?"<>|]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 180)}.mp4`
 
-    await conn.sendMessage(chatId, { react: { text: '✔️', key: m.key } }).catch(() => {})
-  } catch (e) {
+    if (overLimit) {
+      await conn.sendMessage(
+        from,
+        {
+          document: { url: apiResp.url },
+          mimetype: 'video/mp4',
+          fileName
+        },
+        { quoted: m }
+      )
+    } else {
+      await conn.sendMessage(
+        from,
+        {
+          video: { url: apiResp.url },
+          mimetype: 'video/mp4',
+          fileName
+        },
+        { quoted: m }
+      )
+    }
+
+    await conn.sendMessage(from, { react: { text: '✔️', key: m.key } }).catch(() => {})
+  } catch (errSend) {
+    console.error('[play2] Error api/envío:', errSend)
     await conn.sendMessage(
-      chatId,
-      { text: `「✦」Error descargando/enviando el audio.\n\n> 🧩 Error:\n\`\`\`\n${formatErr(e)}\n\`\`\`` },
+      from,
+      { text: `「✦」Ocurrió un error al enviar el video.\n\n> 🧩 Error:\n\`\`\`\n${formatErr(errSend)}\n\`\`\`` },
       { quoted: m }
     )
   }
 }
 
-handler.help = ['play <texto|link>']
+handler.help = ['play2 <texto|link>']
 handler.tags = ['multimedia']
-handler.command = ['play']
+handler.command = ['play2']
 
 export default handler
