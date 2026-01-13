@@ -56,9 +56,10 @@ let handler = async (m, { conn }) => {
 
 ╭┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 │✐ *${identity}*
-│❍ *Fecha y hora:* *${nowText}*
-│❑ *Uptime:* *${uptimeText}*
+│❍ *Fecha y hora* » *${nowText}*
+│❑ *Uptime:* » *${uptimeText}*
 ╰ׅ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
 ❀ *Descargas & Búsquedas*
 > ✐ *.play*
 > ❀ Descarga audios de YouTube.
