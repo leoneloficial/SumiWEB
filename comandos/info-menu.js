@@ -52,7 +52,7 @@ let handler = async (m, { conn }) => {
   const uptimeText = formatUptime(process.uptime())
 
   const menuText = `
-「✿」¡Hola Soy \`${visual.name || globalThis.nombrebot || 'Bot'}\`! 
+❀ ¡Hola Soy \`${visual.name || globalThis.nombrebot || 'Bot'}\`! 
 
 ╭┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 │✐ *${identity}*
