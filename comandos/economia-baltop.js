@@ -56,7 +56,7 @@ const handler = async (m, { conn, args }) => {
     for (let i = 0; i < slice.length; i++) {
       const rank = start + i + 1
       const jid = slice[i].jid
-      const num = String(jid || '').split('@')[0]
+      const num = String(jid || '@').split('@')[0]
       let name = names[i] || String(num)
       name = String(name).trim()
       if (!name.endsWith(':')) name = `${name}:`
