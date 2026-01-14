@@ -46,7 +46,7 @@ let handler = async (m, { conn }) => {
 
   const bannerPath = visual?.banner
   const bannerExists = bannerPath && fs.existsSync(bannerPath)
-  const identity = visual.isSubBot ? 'Sub-Bot' : 'Principal'
+  const identity = visual.isSubBot ? 'Subbot-prem 🅑' : 'Principal 🅥'
 
   const nowText = formatDateTimeChicago(new Date())
   const uptimeText = formatUptime(process.uptime())
