@@ -181,11 +181,11 @@ const handler = async (m, { conn }) => {
     const label = !isSelf && targetName ? `${targetName} (@${tid})` : `@${tid}`
 
     const text = economyDecor({
-      title: isSelf ? `Tu balance actual es:` : `Balance de ${label}`,
+      title: isSelf ? `ᥫ᭡informacion-balanceᰔᩚ ` : `Balance de ${label}`,
       lines: [
-        `> Billetera » *${formatMoney(user.wallet)}*`,
-        `> Banco » *${formatMoney(user.bank)}*`,
-        `> Total » *${formatMoney(totalWealth(user))}*`
+        `>⛀ Billetera » *${formatMoney(user.wallet)}*`,
+        `>⚿ Banco » *${formatMoney(user.bank)}*`,
+        `>⛁ Total » *${formatMoney(totalWealth(user))}*`
       ],
       userTag
     })
