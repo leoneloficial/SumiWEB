@@ -60,7 +60,7 @@ const handler = async (m, { conn, args }) => {
       let name = names[i] || String(num)
       name = String(name).trim()
       if (!name.endsWith(':')) name = `${name}:`
-      lines.push(`✰ ${rank} » *${name}*`)
+      lines.push(`⛁ ${rank} » *${name}*`)
       lines.push(`\t\t Total→ *${formatMoney(slice[i].total)}*`)
     }
     lines.push('')
