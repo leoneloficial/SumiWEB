@@ -162,7 +162,7 @@ let handler = async (m, { conn }) => {
 > ✐ *.bully / *.bullying*
 > ✐ *.wave / *.hola / *.ola*
 
-❀ »  ⊹˚୨ •(=^●ω●^=)• *Exonomia*✿
+❀ »  ⊹˚୨ •(=^●ω●^=)• *Economia*✿
 > ✐ *.einfo / *.economyinfo*
 > ❀ Muestra tu info de economía (cooldowns + dinero).
 > ✐ *.daily*
