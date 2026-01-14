@@ -1,5 +1,5 @@
 const config = {
-    nombrebot: 'sumi sakurasawa',
+    nombrebot: '❤️̶۫̄͟Ⓢ︎𓏲S͟u͟m͟m͟i͟𓍲̈͜𝗨̴ᥣ̥𝗍̈rᥲ̄𓊓̵̬𝐁o̸t̸❤️̶۫̄͟─',
     moneda: 'Yenes',
     apikey: 'AdonixKey21e3lm8441', 
     prefijo: '.',
