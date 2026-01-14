@@ -151,8 +151,9 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   const thumbnail = ytInfo?.thumbnail
 
   const caption =
-    `「✦」Enviando *${title}*\n\n` +
-    `> ❀ Canal » *${author}*\n` +
+    `「✦」Descargando *<${title}>*\n\n` +
+   
+ `> ❀ Canal » *${author}*\n` +
     `> ⴵ Duración » *${duration}*\n` +
     `> 🜸 Link » ${ytUrl}`
 
