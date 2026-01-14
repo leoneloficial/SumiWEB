@@ -33,7 +33,7 @@ try { startManager() } catch {}
 
 
 const now = () => new Date().toISOString().replace('T', ' ').replace('Z', '')
-const botTag = () => chalk.magentaBright('「✿」')
+const botTag = () => chalk.magentaBright('❀')
 
 function oneLineLog(level, main, fields = {}, color = 'whiteBright') {
   const parts = []
