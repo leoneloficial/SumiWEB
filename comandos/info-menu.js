@@ -60,7 +60,7 @@ let handler = async (m, { conn }) => {
 │❑ *Uptime:* » *${uptimeText}*
 ╰ׅ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-❀ »  ⊹˚୨ •(=^●ω●^=)• *descargas*✿
+❀ »  ⊹˚୨ •(=^●ω●^=)• *DESCARGA*✿
 > ✐ *.play*
 > ❀ Descarga audios de YouTube.
 > ✐ *.play2*
@@ -200,7 +200,7 @@ let handler = async (m, { conn }) => {
 > ✐ *.baltop / *.economyboard [página]*
 > ❀ Top de usuarios con más dinero.
 
-❀ »  ⊹˚୨ •(=^●ω●^=)• *PERDIL*✿
+❀ »  ⊹˚୨ •(=^●ω●^=)• *PERFIL*✿
 > ✐ *.perfil / *.profile*
 > ❀ Muestra tu perfil (o el de alguien mencionando / respondiendo).
 > ✐ *.setprofile*
