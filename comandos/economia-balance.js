@@ -183,9 +183,9 @@ const handler = async (m, { conn }) => {
     const text = economyDecor({
       title: isSelf ? `ᥫ᭡informacion-balanceᰔᩚ ` : `Balance de ${label}`,
       lines: [
-        `>⛀ Billetera » *${formatMoney(user.wallet)}*`,
-        `>⚿ Banco » *${formatMoney(user.bank)}*`,
-        `>⛁ Total » *${formatMoney(totalWealth(user))}*`
+        `> ⛀ Billetera » *${formatMoney(user.wallet)}*`,
+        `> ⚿ Banco » *${formatMoney(user.bank)}*`,
+        `> ⛁ Total » *${formatMoney(totalWealth(user))}*`
       ],
       userTag
     })
@@ -199,6 +199,6 @@ const handler = async (m, { conn }) => {
 
 handler.command = ['balance', 'bal', 'coins', 'money']
 handler.tags = ['economy']
-handler.help = ['bal', 'balance @user', 'balance (respondiendo)']
+handler.help = ['bank', 'balance @user', 'balance (respondiendo)']
 
 export default handler
