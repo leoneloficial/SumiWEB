@@ -60,7 +60,7 @@ let handler = async (m, { conn }) => {
 │❑ *Uptime:* » *${uptimeText}*
 ╰ׅ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-❀ *Descargas & Búsquedas*
+❀ »  ⊹˚୨ •(=^●ω●^=)• *descargas*✿
 > ✐ *.play*
 > ❀ Descarga audios de YouTube.
 > ✐ *.play2*
@@ -80,13 +80,13 @@ let handler = async (m, { conn }) => {
 > ✐ *.wikipedia*
 > ❀ Busca lo que quieras en wikipedia.
 
-❀ *Inteligencia Artificial*
+❀ »  ⊹˚୨ •(=^●ω●^=)• *IA*✿
 > ✐ *.imgia*
 > ❀ Genera una imagen a partir de un prompt.
 > ✐ *.gemini*
 > ❀ Habla con el modelo gemini 2.5 flash.
 
-❀ *Sub-Bots*
+❀ »  ⊹˚୨ •(=^●ω●^=)• *SUBBOT EDIT*✿
 > ✐ *.code*
 > ❀ Hazte subbot.
 > ✐ *.setname*
@@ -98,11 +98,11 @@ let handler = async (m, { conn }) => {
 > ✐ *.bots*
 > ❀ Mira los total subbots conectados.
 
-❀ *Random*
+❀ »  ⊹˚୨ •(=^●ω●^=)• *RAMDON*✿
 > ✐ *.meme*
 > ❀ Envía un meme aleatorio en imagen.
 
-❀ *Utilidades*
+❀ »  ⊹˚୨ •(=^●ω●^=)• *UTILIDADES*✿
 > 🜸 *.tourl*
 > ❀ Sube archivos y devuelve link.
 > ✐ *.s*
@@ -112,7 +112,7 @@ let handler = async (m, { conn }) => {
 > ✐ *.tomp4*
 > ❀ Convierte un sticker animado en imagen.
 
-❀ *Reacciones Anime*
+❀ »  ⊹˚୨ •(=^●ω●^=)• *REACCION ANIME*✿
 > ✐ *.angry / *.enojado*
 > ✐ *.bath / *.bañarse*
 > ✐ *.bite / *.morder*
@@ -162,7 +162,7 @@ let handler = async (m, { conn }) => {
 > ✐ *.bully / *.bullying*
 > ✐ *.wave / *.hola / *.ola*
 
-❀ *Economía*
+❀ »  ⊹˚୨ •(=^●ω●^=)• *Exonomia*✿
 > ✐ *.einfo / *.economyinfo*
 > ❀ Muestra tu info de economía (cooldowns + dinero).
 > ✐ *.daily*
@@ -200,7 +200,7 @@ let handler = async (m, { conn }) => {
 > ✐ *.baltop / *.economyboard [página]*
 > ❀ Top de usuarios con más dinero.
 
-❀ *Perfil*
+❀ »  ⊹˚୨ •(=^●ω●^=)• *PERDIL*✿
 > ✐ *.perfil / *.profile*
 > ❀ Muestra tu perfil (o el de alguien mencionando / respondiendo).
 > ✐ *.setprofile*
@@ -214,7 +214,7 @@ let handler = async (m, { conn }) => {
 > ✐ *.pfp @user*
 > ❀ Muestra la foto de perfil de un usuario.
 
-❀ *Gacha*
+❀ *»  ⊹˚୨ •(=^●ω●^=)• *GACHA*✿
 > ✐ *.rw / *.roll*
 > ❀ Tira una waifu (roll).
 > ✐ *.c / *.claim*
@@ -262,7 +262,7 @@ let handler = async (m, { conn }) => {
 > ✐ *.topwaifus*
 > ❀ Top coleccionistas.
 
-❀ *Gestión de Grupos*
+❀ »  ⊹˚୨ •(=^●ω●^=)• *CONFI GRUPOS*✿
 > ✐ *.welcome/antilink/avisos on/off*
 > ❀ Activa/desactiva los eventos en un grupo.
 > ✐ *.banchat / *.unbanchat*
@@ -288,7 +288,7 @@ let handler = async (m, { conn }) => {
 > ✐ *.setbye <mensaje>*
 > ❀ Personaliza el mensaje de despedida.
 
-❀ *Información*
+❀ »  ⊹˚୨ •(=^●ω●^=)• *INFORMACIÓN*✿
 > ✐ *.menu*
 > ❀ Muestra este menú.
 > ✐ *.ping*
@@ -296,7 +296,7 @@ let handler = async (m, { conn }) => {
 > ✐ *.report*
 > ❀ Informa de un error al creador.
 
-❀ *Dueño*
+❀ »  ⊹˚୨ •(=^●ω●^=)• *DUEÑO*✿
 > ✐ *.update*
 > ❀ Actualiza el bot desde Git.
 `.trim()
