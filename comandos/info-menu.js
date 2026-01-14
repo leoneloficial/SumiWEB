@@ -55,10 +55,10 @@ let handler = async (m, { conn }) => {
 ❀ ¡Hola Soy \`${visual.name || globalThis.nombrebot || 'Bot'}\`! 
 
 ╭┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-│✐ *${identity}*
+│❀ *${identity}*
 │❍ *Fecha y hora* » *${nowText}*
-│❑ *Uptime:* » *${uptimeText}*
-╰ׅ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+│✐ *Uptime:* » *${uptimeText}*
+╰ׅ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 ❀ »  ⊹˚୨ •(=^●ω●^=)• *DESCARGA*✿
 > ✐ *.play*
