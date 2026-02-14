@@ -12,7 +12,7 @@ import { getCommandPrefix } from './biblioteca/settings.js'
 
 const SUBBOT_DIR = 'Sessions/SubBotTemp'
 const INFO_FILENAME = 'info.json'
-const DEFAULT_BANNER = 'https://files.catbox.moe/5sgst5.jpg'
+const DEFAULT_BANNER = 'https://qu.ax/fraQn'
 
 const subbots = new Map()
 
